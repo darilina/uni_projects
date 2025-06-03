@@ -33,7 +33,9 @@
         <button onclick="updateMap('income_med_m')">Male</button>
         <button onclick="updateMap('income_med_f')">Female</button>
     </div>
+
     <div id="legend"></div>
+    <div id="info-box"><strong>Click a district</strong></div>
 
     <svg width="800" height="600"></svg>
 
@@ -70,13 +72,19 @@
             const paths = svg.selectAll("path")
                 .data(geoData.features, d => d.properties.name);
 
-            paths.enter()
-                .append("path")
-                .merge(paths)
-                .attr("d", path)
-                .attr("fill", d => color(d.properties[incomeType]));
-
-            paths.exit().remove();
+                paths.enter()
+                 .append("path")
+                 .merge(paths)
+                 .attr("d", path)
+                 .attr("fill", d => color(d.properties[incomeType]))
+                 .on("click", (event, d) => {
+                   d3.select("#info-box").html(`
+                   <strong>${d.properties.name}</strong><br>
+                   Overall: €${d.properties.income_med}<br>
+                   Male: €${d.properties.income_med_m}<br>
+                   Female: €${d.properties.income_med_f}
+        `);
+    });
         }
 
         // Create a Legend
