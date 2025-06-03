@@ -39,6 +39,9 @@
 
     <svg width="800" height="600"></svg>
 
+    <h2>Income Scatter Plot (Male vs Female)</h2>
+    <svg id="scatter" width="800" height="500"></svg>
+
     <script>
         const width = 800;
         const height = 600;
@@ -60,6 +63,8 @@
         d3.json("bezirke_income.geojson").then(data => {
             geoData = data;
             updateMap("income_med"); // initial view
+            drawScatterPlot(data.features);
+
         });
 
         function updateMap(incomeType) {
@@ -86,6 +91,64 @@
         `);
     });
         }
+
+        // Create a Scatter Plot
+        function drawScatterPlot(data) {
+        const svg = d3.select("#scatter");
+        svg.selectAll("*").remove(); // clear before redrawing
+
+        const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+        const width = +svg.attr("width") - margin.left - margin.right;
+        const height = +svg.attr("height") - margin.top - margin.bottom;
+
+        const g = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const x = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.properties.income_med_m)).nice()
+        .range([0, width]);
+
+        const y = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.properties.income_med_f)).nice()
+        .range([height, 0]);
+
+        g.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).tickFormat(d => "€" + d));
+
+        g.append("g")
+        .call(d3.axisLeft(y).tickFormat(d => "€" + d));
+
+        g.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 35)
+        .attr("text-anchor", "middle")
+        .text("Male Median Income (€)");
+
+        g.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -35)
+        .attr("text-anchor", "middle")
+        .text("Female Median Income (€)");
+
+        g.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => x(d.properties.income_med_m))
+        .attr("cy", d => y(d.properties.income_med_f))
+        .attr("r", 4)
+        .attr("fill", d => color(d.properties.income_med))
+        .on("click", (event, d) => {
+            d3.select("#info-box").html(`
+                <strong>${d.properties.name}</strong><br>
+                Overall: €${d.properties.income_med}<br>
+                Male: €${d.properties.income_med_m}<br>
+                Female: €${d.properties.income_med_f}
+            `);
+        });
+}
 
         // Create a Legend
 
