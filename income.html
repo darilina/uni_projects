@@ -33,6 +33,8 @@
         <button onclick="updateMap('income_med_m')">Male</button>
         <button onclick="updateMap('income_med_f')">Female</button>
     </div>
+    <div id="legend"></div>
+
     <svg width="800" height="600"></svg>
 
     <script>
@@ -62,6 +64,8 @@
             const values = geoData.features.map(d => d.properties[incomeType]);
             const extent = d3.extent(values);
             color.domain(extent);
+            createLegend(color);
+
 
             const paths = svg.selectAll("path")
                 .data(geoData.features, d => d.properties.name);
@@ -74,6 +78,42 @@
 
             paths.exit().remove();
         }
+
+        // Create a Legend
+
+        function createLegend(colorScale) {
+    const legendData = colorScale.range().map(d => {
+        const invert = colorScale.invertExtent(d);
+        return {
+            color: d,
+            extent: invert
+        };
+    });
+
+    const legend = d3.select("#legend")
+        .html("<strong>Income Legend (EUR)</strong>")
+        .append("svg")
+        .attr("width", 400)
+        .attr("height", 50);
+
+    const legendGroup = legend.selectAll("g")
+        .data(legendData)
+        .enter()
+        .append("g")
+        .attr("transform", (d, i) => `translate(${i * 70}, 0)`);
+
+    legendGroup.append("rect")
+        .attr("width", 70)
+        .attr("height", 15)
+        .attr("fill", d => d.color);
+
+    legendGroup.append("text")
+        .attr("y", 30)
+        .attr("x", 0)
+        .attr("font-size", "10px")
+        .text(d => `${Math.round(d.extent[0])}–${Math.round(d.extent[1])}`);
+}
+
     </script>
 </body>
 </html>
