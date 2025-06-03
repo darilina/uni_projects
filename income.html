@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Austrian District Incomes</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        .button-container {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-right: 5px;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        svg {
+            border: 1px solid #ccc;
+        }
+        path {
+            stroke: #fff;
+            stroke-width: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Choropleth Map of Austrian District Incomes</h1>
+    <div class="button-container">
+        <button onclick="updateMap('income_med')">Overall</button>
+        <button onclick="updateMap('income_med_m')">Male</button>
+        <button onclick="updateMap('income_med_f')">Female</button>
+    </div>
+    <svg width="800" height="600"></svg>
+
+    <script>
+        const width = 800;
+        const height = 600;
+
+        const svg = d3.select("svg");
+
+        const projection = d3.geoConicConformal()
+            .center([13.4, 47.5])
+            .scale(7000)
+            .translate([width / 2, height / 2]);
+
+        const path = d3.geoPath().projection(projection);
+
+        const color = d3.scaleQuantize()
+            .range(d3.schemeBlues[5]); // 5-class color scale
+
+        let geoData = null;
+
+        d3.json("bezirke_income.geojson").then(data => {
+            geoData = data;
+            updateMap("income_med"); // initial view
+        });
+
+        function updateMap(incomeType) {
+            const values = geoData.features.map(d => d.properties[incomeType]);
+            const extent = d3.extent(values);
+            color.domain(extent);
+
+            const paths = svg.selectAll("path")
+                .data(geoData.features, d => d.properties.name);
+
+            paths.enter()
+                .append("path")
+                .merge(paths)
+                .attr("d", path)
+                .attr("fill", d => color(d.properties[incomeType]));
+
+            paths.exit().remove();
+        }
+    </script>
+</body>
+</html>
